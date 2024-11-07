@@ -1,57 +1,27 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Clone Repository') {
-            steps {
-                // Clone the repository containing the app
-                git 'https://github.com/your-username/ci-cd-pipeline.git'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    // Build the Docker image with a tag
-                    docker.build("ci-cd-pipeline-app")
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                script {
-                    // You could run tests here. For demo, let’s skip this stage.
-                    echo 'Running Tests (None defined for demo)'
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                        docker.image('ci-cd-pipeline-app').push("latest")
-                    }
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    // Example deploy step, which could be Kubernetes, Docker Compose, etc.
-                    echo 'Deploying... (Define deployment steps as needed)'
-                }
-            }
-        }
+    environment {
+        GITHUB_SSH_CREDENTIALS = 'GitHub SSH Key'  // Replace with your SSH credentials ID
     }
 
-    post {
-        always {
-            // Cleanup if needed
-            echo 'Pipeline completed.'
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // Use SSH URL and credentials for GitHub authentication
+                    checkout scm: [
+                        $class: 'GitSCM',
+                        branches: [[name: 'refs/heads/main']],
+                        userRemoteConfigs: [[
+                            url: 'git@github.com:niks1212/CI-CD-Pipeline.git',
+                            credentialsId: GITHUB_SSH_CREDENTIALS
+                        ]]
+                    ]
+                }
+            }
         }
+
+        // Other stages here (Build, Deploy, etc.)
     }
 }
-
